@@ -1,0 +1,1513 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b5e20">
+<!-- Solo se puede hablar con Google Apps Script; nada más. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src https://script.google.com https://*.googleusercontent.com; base-uri 'none'; form-action 'none'">
+<title>Maquinaria Oroite</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Maquinaria Oroite">
+<style>
+  :root {
+    --verde: #1b5e20; --verde-bg: #e8f5e9;
+    --gris: #37474f; --gris-bg: #eceff1; --borde: #455a64;
+    --rojo: #b71c1c; --rojo-bg: #ffebee;
+    --ambar: #5d4000; --ambar-borde: #b26a00; --ambar-bg: #fff3cd;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: #fff; color: #111;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 20px; line-height: 1.4;
+  }
+  [hidden] { display: none !important; }
+
+  /* Encabezado */
+  .barra { background: var(--verde); color: #fff; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; }
+  .marca { font-size: 26px; font-weight: 800; }
+  .sub { font-size: 16px; }
+  main { max-width: 560px; margin: 0 auto; padding: 16px 16px calc(40px + env(safe-area-inset-bottom)); }
+  h1 { font-size: 27px; line-height: 1.2; margin: 8px 0 16px; }
+  p { margin: 0 0 12px; }
+
+  /* Botones (todos de 56 px o más) */
+  .btn {
+    display: block; width: 100%; min-height: 64px; margin: 12px 0; padding: 14px 18px;
+    font: inherit; font-size: 22px; font-weight: 800; text-align: center;
+    color: #fff; background: var(--verde); border: 3px solid var(--verde); border-radius: 14px; cursor: pointer;
+  }
+  .btn:active { filter: brightness(.88); }
+  .btn[disabled] { background: #b0bec5; border-color: #b0bec5; color: #263238; cursor: default; }
+  .btn-sec { background: #fff; color: var(--verde); }
+  .btn-chico { min-height: 56px; font-size: 18px; }
+  .btn-home {
+    min-height: 140px; font-size: 32px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+  }
+  .btn-home .ico { font-size: 54px; line-height: 1; }
+  .btn-gris { background: var(--gris); border-color: var(--gris); }
+  .btn-confirmar { min-height: 84px; font-size: 30px; }
+
+  /* Campos */
+  .campo { margin: 0 0 20px; }
+  label, .etiqueta { display: block; margin-bottom: 6px; font-size: 20px; font-weight: 800; }
+  .opc { font-size: 16px; font-weight: 500; color: #455a64; }
+  input, select, textarea {
+    display: block; width: 100%; min-height: 60px; padding: 10px 12px;
+    font: inherit; font-size: 22px; color: #111; background: #fff;
+    border: 3px solid var(--borde); border-radius: 12px;
+  }
+  textarea { min-height: 104px; resize: vertical; }
+  input:focus, select:focus, textarea:focus, .btn:focus-visible, .segmento button:focus-visible {
+    outline: 4px solid #ffb300; outline-offset: 2px;
+  }
+  .campo.malo input, .campo.malo select, .campo.malo textarea, .campo.malo .segmento { border-color: var(--rojo); background: #fff8f8; }
+  .error { margin-top: 6px; font-size: 18px; font-weight: 800; color: var(--rojo); }
+  .error:empty { display: none; }
+  .ayuda { margin-top: 6px; font-size: 17px; color: #37474f; }
+  .ayuda:empty { display: none; }
+  .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pin { text-align: center; font-size: 40px; letter-spacing: 12px; -webkit-text-security: disc; text-security: disc; }
+
+  /* Sí / No */
+  .segmento { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; border: 3px solid transparent; border-radius: 14px; }
+  .segmento button {
+    min-height: 64px; font: inherit; font-size: 26px; font-weight: 900; cursor: pointer;
+    color: var(--gris); background: #fff; border: 3px solid var(--gris); border-radius: 12px;
+  }
+  .segmento button[aria-pressed="true"] { color: #fff; background: var(--verde); border-color: var(--verde); }
+
+  /* Horas calculadas */
+  .horas { margin: 0 0 20px; padding: 12px 14px; font-size: 24px; font-weight: 800; background: var(--gris-bg); border: 3px solid var(--gris); border-radius: 12px; }
+  .horas.ok { color: var(--verde); background: var(--verde-bg); border-color: var(--verde); }
+  .horas.mal { color: var(--rojo); background: var(--rojo-bg); border-color: var(--rojo); }
+  .horas.aviso { color: var(--ambar); background: var(--ambar-bg); border-color: var(--ambar-borde); }
+
+  /* Cajas de mensajes */
+  .caja { margin: 0 0 16px; padding: 12px 14px; border: 3px solid; border-radius: 12px; }
+  .caja-error { color: #7f0000; background: var(--rojo-bg); border-color: var(--rojo); font-weight: 700; }
+  .caja-aviso { color: var(--ambar); background: var(--ambar-bg); border-color: var(--ambar-borde); font-weight: 700; }
+  .caja ul { margin: 6px 0 0; padding-left: 22px; }
+
+  /* Resumen de confirmación */
+  .resumen { margin: 0 0 16px; border: 3px solid var(--gris); border-radius: 12px; overflow: hidden; }
+  .resumen .fila { display: flex; justify-content: space-between; gap: 14px; padding: 10px 14px; border-bottom: 2px solid #cfd8dc; }
+  .resumen .fila:last-child { border-bottom: 0; }
+  .resumen dt { color: #37474f; font-weight: 600; }
+  .resumen dd { margin: 0; text-align: right; font-weight: 800; word-break: break-word; }
+  .resumen .destacado { background: var(--verde-bg); }
+
+  /* Resultado */
+  .resultado { margin: 12px 0 18px; padding: 28px 16px; text-align: center; background: var(--verde-bg); border: 4px solid var(--verde); border-radius: 16px; }
+  .resultado.mal { background: var(--rojo-bg); border-color: var(--rojo); }
+  .ico-grande { font-size: 72px; line-height: 1.1; }
+  .texto-xl { margin: 8px 0; font-size: 34px; font-weight: 900; }
+  .texto-grande { font-size: 24px; font-weight: 800; }
+
+  /* Pantalla de carga / envío */
+  .centro { padding: 48px 0; text-align: center; }
+  .spinner { width: 56px; height: 56px; margin: 0 auto 16px; border: 7px solid #cfd8dc; border-top-color: var(--verde); border-radius: 50%; animation: giro 1s linear infinite; }
+  @keyframes giro { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 4s; } }
+  .overlay { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, .94); }
+
+  .pie-inicio { margin-top: 28px; padding-top: 12px; border-top: 2px solid #cfd8dc; }
+  .mini { margin-top: 10px; font-size: 15px; color: #455a64; text-align: center; }
+  #estado-datos, #r-detalle { white-space: pre-line; }
+
+  /* Barra de pendientes: se ve en todas las pantallas menos en la del PIN */
+  .barra-estado {
+    position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 16px; font-size: 19px; color: var(--verde); background: var(--verde-bg); border-bottom: 3px solid var(--verde);
+  }
+  .barra-estado.hay { color: var(--ambar); background: var(--ambar-bg); border-bottom-color: var(--ambar-borde); }
+  .be-texto { display: flex; flex-direction: column; min-width: 0; }
+  #be-red { font-size: 16px; font-weight: 700; }
+  #be-red:empty { display: none; }
+  .btn-be {
+    min-height: 56px; padding: 8px 14px; font: inherit; font-size: 18px; font-weight: 800; cursor: pointer;
+    color: #fff; background: var(--verde); border: 3px solid var(--verde); border-radius: 12px;
+  }
+  .resultado.pendiente { background: var(--ambar-bg); border-color: var(--ambar-borde); }
+  .btn-aviso { color: var(--ambar); background: var(--ambar-bg); border-color: var(--ambar-borde); }
+  details { margin: 12px 0; }
+  summary { display: flex; align-items: center; min-height: 56px; font-weight: 800; cursor: pointer; }
+  .lista-simple { margin: 0 0 8px; padding-left: 22px; font-size: 17px; }
+</style>
+</head>
+<body>
+
+<noscript><p style="padding:16px;font-size:22px">Esta app necesita JavaScript. Activalo en el navegador.</p></noscript>
+
+<header class="barra">
+  <div class="marca">🌾 Ganadera Oroite</div>
+  <div class="sub">Estancia Riachito · Maquinaria</div>
+</header>
+
+<div id="barra-estado" class="barra-estado" hidden role="status" aria-live="polite">
+  <div class="be-texto">
+    <strong id="be-pendientes">Pendientes de enviar: 0</strong>
+    <span id="be-red"></span>
+  </div>
+  <button type="button" class="btn-be" id="btn-enviar-ahora" hidden>📤 Enviar ahora</button>
+  <button type="button" class="btn-be" id="btn-pin-nuevo" hidden>🔑 Ingresar el PIN</button>
+</div>
+
+<main id="app">
+
+  <!-- Cargando -->
+  <section id="p-cargando" class="pantalla" aria-live="polite">
+    <div class="centro">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="texto-grande" id="cargando-texto">Cargando…</p>
+    </div>
+  </section>
+
+  <!-- No se pudo cargar -->
+  <section id="p-error" class="pantalla" hidden>
+    <h1 id="error-titulo">No se pudo cargar</h1>
+    <div class="caja caja-error"><span id="error-detalle"></span></div>
+    <button type="button" class="btn" id="btn-reintentar">🔄 Reintentar</button>
+    <button type="button" class="btn btn-sec" id="btn-error-pin">🔑 Cambiar PIN</button>
+  </section>
+
+  <!-- PIN -->
+  <section id="p-pin" class="pantalla" hidden>
+    <h1>Ingresá el PIN</h1>
+    <p>Es el número de 6 cifras que te dio el administrador. Se pide una sola vez en este celular.</p>
+    <form id="f-pin" autocomplete="off" novalidate>
+      <div class="campo" id="campo-pin">
+        <label for="pin-input">PIN (6 números)</label>
+        <!-- Campo de texto numérico (NO type="password"): así Chrome no ofrece guardar el PIN en la cuenta de Google del celular.
+             Los puntos los pone el CSS (-webkit-text-security). -->
+        <input id="pin-input" class="pin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"
+               autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" data-lpignore="true" data-1p-ignore="true">
+        <div class="error" id="pin-error" role="alert"></div>
+      </div>
+      <button type="submit" class="btn" id="btn-pin" disabled>Entrar</button>
+    </form>
+  </section>
+
+  <!-- Inicio -->
+  <section id="p-inicio" class="pantalla" hidden>
+    <h1>¿Qué querés cargar?</h1>
+    <button type="button" class="btn btn-home" id="btn-ir-trabajo"><span class="ico" aria-hidden="true">🚜</span>Cargar trabajo</button>
+    <button type="button" class="btn btn-home btn-gris" id="btn-ir-gasoil"><span class="ico" aria-hidden="true">⛽</span>Cargar gasoil</button>
+    <button type="button" class="btn btn-chico btn-aviso" id="aviso-version" hidden>🆕 Hay una versión nueva: tocá para actualizar</button>
+    <div class="caja caja-error" id="aviso-rechazados" hidden>
+      <strong>⚠️ El servidor no aceptó estos registros. Avisale al administrador:</strong>
+      <ul class="lista-simple" id="ar-lista"></ul>
+      <button type="button" class="btn btn-sec btn-chico" id="btn-rechazados-ok">Entendido</button>
+    </div>
+    <details id="detalle-pendientes" hidden>
+      <summary id="dp-titulo">Ver pendientes</summary>
+      <ul class="lista-simple" id="dp-lista"></ul>
+    </details>
+    <div class="pie-inicio">
+      <button type="button" class="btn btn-chico" id="btn-instalar" hidden>📲 Instalar en el celular</button>
+      <button type="button" class="btn btn-sec btn-chico" id="btn-actualizar">🔄 Actualizar listas</button>
+      <button type="button" class="btn btn-sec btn-chico" id="btn-cambiar-pin">🔑 Cambiar PIN</button>
+      <p class="mini" id="estado-datos"></p>
+    </div>
+  </section>
+
+  <!-- Formulario: trabajo -->
+  <section id="p-trabajo" class="pantalla" hidden>
+    <h1>🚜 Cargar trabajo</h1>
+    <form id="f-trabajo" autocomplete="off" novalidate>
+      <div class="campo" data-campo="fecha">
+        <label for="t-fecha">Fecha</label>
+        <input type="date" id="t-fecha">
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="operario">
+        <label for="t-operario">Operario</label>
+        <select id="t-operario"></select>
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="tractor">
+        <label for="t-tractor">Tractor / máquina</label>
+        <select id="t-tractor"></select>
+        <div class="ayuda" id="t-ultimo"></div>
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="implemento">
+        <label for="t-implemento">Implemento <span class="opc">(si usó alguno)</span></label>
+        <select id="t-implemento"></select>
+      </div>
+      <div class="campo" data-campo="trabajo">
+        <label for="t-trabajo">Trabajo realizado</label>
+        <select id="t-trabajo"></select>
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="otro" id="t-otro-campo" hidden>
+        <label for="t-otro">¿Qué trabajo fue?</label>
+        <input type="text" id="t-otro" maxlength="100" autocapitalize="sentences">
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="potrero">
+        <label for="t-potrero">Potrero</label>
+        <select id="t-potrero"></select>
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="fila2">
+        <div class="campo" data-campo="hini">
+          <label for="t-hini">Horómetro inicial</label>
+          <input type="text" id="t-hini" inputmode="decimal" autocomplete="off">
+          <div class="error" role="alert"></div>
+        </div>
+        <div class="campo" data-campo="hfin">
+          <label for="t-hfin">Horómetro final</label>
+          <input type="text" id="t-hfin" inputmode="decimal" autocomplete="off">
+          <div class="error" role="alert"></div>
+        </div>
+      </div>
+      <div class="horas" id="t-horas" aria-live="polite">Horas trabajadas: —</div>
+      <div class="campo" data-campo="hect">
+        <label for="t-hect">Hectáreas trabajadas <span class="opc">(opcional)</span></label>
+        <input type="text" id="t-hect" inputmode="decimal" autocomplete="off">
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="obs">
+        <label for="t-obs">Observaciones <span class="opc">(opcional)</span></label>
+        <textarea id="t-obs" maxlength="500"></textarea>
+      </div>
+      <div class="caja caja-error" id="t-errores" hidden></div>
+      <button type="submit" class="btn">Revisar y enviar ▶</button>
+      <button type="button" class="btn btn-sec" data-accion="inicio">◀ Volver al inicio</button>
+    </form>
+  </section>
+
+  <!-- Formulario: gasoil -->
+  <section id="p-gasoil" class="pantalla" hidden>
+    <h1>⛽ Cargar gasoil</h1>
+    <form id="f-gasoil" autocomplete="off" novalidate>
+      <div class="campo" data-campo="fecha">
+        <label for="g-fecha">Fecha</label>
+        <input type="date" id="g-fecha">
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="operario">
+        <label for="g-operario">Operario</label>
+        <select id="g-operario"></select>
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="tractor">
+        <label for="g-tractor">Tractor / máquina</label>
+        <select id="g-tractor"></select>
+        <div class="ayuda" id="g-ultimo"></div>
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="litros">
+        <label for="g-litros">Litros cargados</label>
+        <input type="text" id="g-litros" inputmode="decimal" autocomplete="off">
+        <div class="ayuda" id="g-capacidad"></div>
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="horo">
+        <label for="g-horo">Horómetro al cargar</label>
+        <input type="text" id="g-horo" inputmode="decimal" autocomplete="off">
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="lleno">
+        <span class="etiqueta" id="g-lleno-etq">¿Llenó el tanque?</span>
+        <div class="segmento" role="group" aria-labelledby="g-lleno-etq">
+          <button type="button" id="g-lleno-si" aria-pressed="true">SÍ</button>
+          <button type="button" id="g-lleno-no" aria-pressed="false">NO</button>
+        </div>
+      </div>
+      <div class="campo" data-campo="origen">
+        <label for="g-origen">Origen del gasoil</label>
+        <select id="g-origen"></select>
+        <div class="error" role="alert"></div>
+      </div>
+      <div class="campo" data-campo="obs">
+        <label for="g-obs">Observaciones <span class="opc">(opcional)</span></label>
+        <textarea id="g-obs" maxlength="500"></textarea>
+      </div>
+      <div class="caja caja-error" id="g-errores" hidden></div>
+      <button type="submit" class="btn">Revisar y enviar ▶</button>
+      <button type="button" class="btn btn-sec" data-accion="inicio">◀ Volver al inicio</button>
+    </form>
+  </section>
+
+  <!-- Confirmación -->
+  <section id="p-confirmar" class="pantalla" hidden>
+    <h1>Revisá los datos</h1>
+    <dl class="resumen" id="c-resumen"></dl>
+    <div id="c-avisos"></div>
+    <div class="caja caja-error" id="c-error" role="alert" hidden></div>
+    <button type="button" class="btn btn-confirmar" id="btn-confirmar">✅ Confirmar</button>
+    <button type="button" class="btn btn-sec" id="btn-corregir">✏️ Corregir</button>
+  </section>
+
+  <!-- Resultado -->
+  <section id="p-resultado" class="pantalla" hidden>
+    <div class="resultado" id="r-caja">
+      <div class="ico-grande" id="r-ico" aria-hidden="true">✅</div>
+      <p class="texto-xl" id="r-titulo">Guardado</p>
+      <p id="r-detalle"></p>
+    </div>
+    <div id="r-avisos"></div>
+    <button type="button" class="btn" id="btn-otro">➕ Cargar otro</button>
+    <button type="button" class="btn btn-sec" id="btn-inicio">🏠 Ir al inicio</button>
+  </section>
+
+</main>
+
+<div id="enviando" class="overlay" hidden role="status" aria-live="polite">
+  <div class="centro">
+    <div class="spinner" aria-hidden="true"></div>
+    <p class="texto-grande">Enviando…</p>
+  </div>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+// ==========================================================================
+// 1. CONFIGURACIÓN
+//    La URL no es un secreto: la llave es el PIN, que NO está en este archivo.
+// ==========================================================================
+const URL_APP = 'https://script.google.com/macros/s/AKfycbwm7M-_JqhRJbF7TV3E9ojLo5iLbj8bXSOVJhO6VE-Hpinoii6f7DFFaRK1uULpvakh/exec';
+const VERSION_APP = '0.4.1';
+const ESPERA_MS = 20000;            // tiempo máximo esperando al servidor (se suma un poco por cada registro del lote)
+const LOTE = 10;                    // registros por envío
+const REINTENTO_MS = 60000;         // mientras haya pendientes y la app esté abierta, se reintenta cada minuto
+const DIAS_VIEJA = 60;              // avisar si la fecha es más vieja que esto
+const CLAVE = {
+  pin: 'oroite.pin', disp: 'oroite.dispositivo', ultimos: 'oroite.ultimos',
+  cola: 'oroite.cola',                // registros guardados en el celular, esperando ser enviados
+  rechazados: 'oroite.rechazados',    // registros que el servidor no aceptó (para avisar)
+  listas: 'oroite.listas'             // copia de las listas, para abrir la app sin señal
+};
+
+// ==========================================================================
+// 2. UTILIDADES
+// ==========================================================================
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+const dos = n => (n < 10 ? '0' : '') + n;
+
+function leerLS(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function guardarLS(k, v) {
+  try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* sin almacenamiento */ }
+}
+
+/** Número con coma o punto decimal. null = vacío, NaN = inválido. (Igual que en el servidor.) */
+function parseNumero(v) {
+  if (v === null || v === undefined) return null;
+  let s = String(v).replace(/\s/g, '');
+  if (s === '') return null;
+  if (!/^[-+]?[\d.,]+$/.test(s)) return NaN;
+  const ult = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'));
+  if (ult >= 0) s = s.substring(0, ult).replace(/[.,]/g, '') + '.' + s.substring(ult + 1);
+  const n = Number(s);
+  return isFinite(n) ? n : NaN;
+}
+const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+const fmt = n => String(r2(n)).replace('.', ',');           // 4523.7 -> "4523,7"
+
+function hoyISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + dos(d.getMonth() + 1) + '-' + dos(d.getDate());
+}
+function fechaValida(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return false;
+  const f = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  return f.getUTCFullYear() === +m[1] && f.getUTCMonth() === +m[2] - 1 && f.getUTCDate() === +m[3] && +m[1] >= 2000;
+}
+function diasEntre(a, b) {
+  const f = s => { const p = s.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000; };
+  return Math.round(f(a) - f(b));
+}
+function fechaDmy(iso) { const p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+
+function aleatorios(n) {
+  const b = new Uint8Array(n);
+  if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(b);
+  else for (let i = 0; i < n; i++) b[i] = Math.floor(Math.random() * 256);
+  return b;
+}
+/** ID único del registro: lo genera el celular, así el servidor no lo duplica si se envía dos veces. */
+function uuid() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  const b = aleatorios(16);
+  b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.prototype.map.call(b, x => (x < 16 ? '0' : '') + x.toString(16)).join('');
+  return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+}
+/** Nombre corto de este celular (solo para el Log del administrador). */
+function idDispositivo() {
+  let d = leerLS(CLAVE.disp);
+  if (!d || !/^CEL-[A-Z0-9]{4}$/.test(d)) {
+    const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    d = 'CEL-' + Array.prototype.map.call(aleatorios(4), x => letras.charAt(x % letras.length)).join('');
+    guardarLS(CLAVE.disp, d);
+  }
+  return d;
+}
+
+// ==========================================================================
+// 3. ESTADO Y COMUNICACIÓN CON EL SERVIDOR
+// ==========================================================================
+const estado = {
+  pin: leerLS(CLAVE.pin),
+  disp: idDispositivo(),
+  listas: null,
+  config: { horasMaxDia: 14 },
+  actualizado: null,
+  pantalla: 'cargando',
+  formActual: null,       // 'trabajo' | 'gasoil'
+  pendiente: null,        // registro que se está por enviar (conserva su ID si hay que reintentar)
+  enviando: false,        // pantalla "Enviando…" (el tractorista espera)
+  enviandoCola: false,    // hay un envío de pendientes en curso
+  vaciando: null,         // el envío en curso (así no hay dos a la vez)
+  sinSenal: false,        // el último intento de hablar con el servidor falló por falta de conexión
+  pinInvalido: false,     // el servidor dijo que el PIN guardado ya no sirve: no se insiste
+  desdeCache: false,      // las listas salieron de la copia guardada en el celular
+  avisoListas: '',
+  mensajeBarra: '',
+  relojBarra: null,
+  refrescando: false,
+  versionNueva: false,
+  paginaGuardada: false,  // el service worker ya guardó la página: la app abre sin señal
+  verPendiente: null      // registro que se ve en el cartel "Guardado en el celular" (para pasarlo a "Enviado")
+};
+
+/** Un pedido al servidor. Devuelve el JSON, o lanza {tipo:'red'|'respuesta'}. */
+async function llamar(accion, extra, espera) {
+  // Si el celular sabe que no hay conexión, ni se intenta (el aviso es inmediato)
+  if (navigator.onLine === false) throw { tipo: 'red' };
+  const cuerpo = JSON.stringify(Object.assign({ accion: accion, pin: estado.pin, dispositivo: estado.disp }, extra || {}));
+  const ctrl = new AbortController();
+  const reloj = setTimeout(() => ctrl.abort(), espera || ESPERA_MS);
+  try {
+    let resp;
+    try {
+      // text/plain evita el "preflight" de CORS, que Apps Script no responde
+      resp = await fetch(URL_APP, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: cuerpo, signal: ctrl.signal });
+    } catch (e) {
+      throw { tipo: 'red' };
+    }
+    try { return await resp.json(); } catch (e) { throw { tipo: 'respuesta' }; }
+  } finally {
+    clearTimeout(reloj);
+  }
+}
+
+function textoError(codigo) {
+  switch (codigo) {
+    case 'PIN_INCORRECTO': return 'El PIN es incorrecto.';
+    case 'BLOQUEADO': return 'Hubo demasiados intentos con PIN incorrecto. Esperá 15 minutos y probá de nuevo.';
+    case 'OCUPADO': return 'El servidor está ocupado. Probá de nuevo en unos segundos.';
+    default: return 'Hay un problema en el servidor (' + codigo + '). Avisale al administrador.';
+  }
+}
+const TEXTO_SIN_RED = 'No hay conexión con el servidor. Revisá la señal y probá de nuevo.';
+const TEXTO_RESPUESTA = 'El servidor respondió algo inesperado. Probá de nuevo; si sigue, avisale al administrador.';
+
+// ==========================================================================
+// 4. PANTALLAS Y NAVEGACIÓN
+//    Un solo "paso atrás" de Android por pantalla interna; en el inicio sale de la app.
+// ==========================================================================
+const PANTALLAS = ['cargando', 'error', 'pin', 'inicio', 'trabajo', 'gasoil', 'confirmar', 'resultado'];
+
+function mostrar(nombre) {
+  PANTALLAS.forEach(p => { $('#p-' + p).hidden = (p !== nombre); });
+  estado.pantalla = nombre;
+  if (nombre !== 'resultado') estado.verPendiente = null;          // al salir del cartel ya no hay nada que actualizar
+  window.scrollTo(0, 0);
+  actualizarBarra();
+}
+/** Pantalla interna: deja una (sola) entrada en el historial para que "atrás" vuelva dentro de la app. */
+function entrar(nombre) {
+  mostrar(nombre);
+  if (!(history.state && history.state.app)) history.pushState({ app: true }, '');
+}
+function irInicio() {
+  if (history.state && history.state.app) history.back();    // el aviso de "popstate" muestra el inicio
+  else mostrarInicio();
+}
+window.addEventListener('popstate', () => {
+  const p = estado.pantalla;
+  if (estado.enviando) { history.pushState({ app: true }, ''); return; }
+  if (p === 'confirmar') { mostrar(estado.formActual || 'inicio'); history.pushState({ app: true }, ''); }
+  else if (p === 'trabajo' || p === 'gasoil' || p === 'resultado') { mostrarInicio(); }
+});
+
+function ocupado(si) {
+  estado.enviando = si;
+  $('#enviando').hidden = !si;
+}
+
+function mostrarError(titulo, detalle, conPin) {
+  $('#error-titulo').textContent = titulo;
+  $('#error-detalle').textContent = detalle;
+  $('#btn-error-pin').hidden = !conPin;
+  mostrar('error');
+}
+
+// ==========================================================================
+// 5. PIN Y CARGA DE LISTAS
+// ==========================================================================
+function pantallaPin(mensaje) {
+  $('#pin-input').value = '';
+  $('#btn-pin').disabled = true;
+  $('#pin-error').textContent = mensaje || '';
+  $('#campo-pin').classList.toggle('malo', !!mensaje);
+  mostrar('pin');
+  setTimeout(() => { try { $('#pin-input').focus(); } catch (e) { /* nada */ } }, 50);
+}
+function olvidarPin() {
+  estado.pin = null;
+  guardarLS(CLAVE.pin, null);
+}
+
+/** Guarda una copia de las listas en el celular: así la app abre sin señal. */
+function guardarCacheListas() {
+  if (!estado.listas) return;
+  guardarLS(CLAVE.listas, JSON.stringify({
+    v: 1, listas: estado.listas, config: estado.config,
+    cuando: (estado.actualizado || new Date()).toISOString()
+  }));
+}
+function leerCacheListas() {
+  const c = leerJSON(CLAVE.listas, null);
+  const L = c && c.listas;
+  const okLista = x => Array.isArray(x);
+  if (!L || !okLista(L.operarios) || !okLista(L.tractores) || !okLista(L.implementos) || !okLista(L.trabajos) || !okLista(L.potreros) || !okLista(L.origenes)) return null;
+  return c;
+}
+/** Lo que está pendiente ya pasó: el "último horómetro" de cada máquina no puede volver atrás. */
+function aplicarPendientesALista() {
+  leerCola().forEach(it => {
+    const t = tractorPorNombre(it.tractor);
+    if (t) t.ultimoHorometro = it.horometroFinal;
+  });
+}
+/** Adopta las listas que mandó el servidor. */
+function aceptarListas(r) {
+  estado.listas = r.listas;
+  estado.config = r.config || estado.config;
+  estado.actualizado = new Date();
+  estado.desdeCache = false;
+  estado.avisoListas = '';
+  estado.sinSenal = false;
+  aplicarPendientesALista();
+  guardarCacheListas();
+}
+
+/**
+ * Pide las listas al servidor. Es también la forma de validar el PIN.
+ * desdePin = true cuando el PIN recién se escribió (se guarda solo si el servidor lo acepta).
+ * Si ya hay listas guardadas y falla, NO se pierde el acceso: se vuelve al inicio con un aviso.
+ */
+async function cargarListas(desdePin) {
+  $('#cargando-texto').textContent = desdePin ? 'Verificando el PIN…' : 'Cargando datos…';
+  mostrar('cargando');
+  const conservar = !desdePin && !!estado.listas;
+  const fallar = (titulo, texto, conPin) => {
+    if (conservar) { estado.avisoListas = 'No se pudieron actualizar: ' + texto; return mostrarInicio(); }
+    return mostrarError(titulo, texto, conPin);
+  };
+  let r;
+  try {
+    r = await llamar('listas');
+  } catch (e) {
+    estado.sinSenal = true;
+    const texto = e.tipo === 'red' ? TEXTO_SIN_RED : TEXTO_RESPUESTA;
+    if (desdePin) { estado.pin = null; return pantallaPin(e.tipo === 'red' ? 'Sin conexión. Hace falta señal para entrar la primera vez.' : texto); }
+    return fallar('No se pudieron cargar los datos', texto, true);
+  }
+  if (!r || r.ok !== true) {
+    const codigo = r && r.error ? r.error : 'DESCONOCIDO';
+    if (codigo === 'PIN_INCORRECTO') {
+      olvidarPin();
+      return pantallaPin(desdePin ? 'PIN incorrecto. Probá de nuevo.' : 'El PIN cambió. Escribí el PIN nuevo.');
+    }
+    if (desdePin) { estado.pin = null; return pantallaPin(textoError(codigo)); }
+    return fallar('No se pudieron cargar los datos', textoError(codigo), codigo === 'BLOQUEADO' || codigo === 'SIN_PIN_CONFIGURADO');
+  }
+  aceptarListas(r);
+  if (desdePin) guardarLS(CLAVE.pin, estado.pin);
+  estado.pinInvalido = false;
+  prepararFormularios();
+  mostrarInicio();
+  vaciarSiHay();                     // con PIN y señal, se envía lo que haya quedado pendiente
+}
+
+/** Actualiza las listas por detrás, sin interrumpir lo que el tractorista esté haciendo. */
+async function refrescarListas() {
+  if (estado.refrescando || !estado.pin || estado.pinInvalido) return false;   // con un PIN ya rechazado no se insiste: cada intento cuenta para el bloqueo
+  estado.refrescando = true;
+  try {
+    let r;
+    try { r = await llamar('listas'); } catch (e) { estado.sinSenal = true; return false; }
+    if (!r || r.ok !== true) {
+      if (r && r.error === 'PIN_INCORRECTO') estado.pinInvalido = true;
+      return false;
+    }
+    estado.pinInvalido = false;
+    aceptarListas(r);
+    prepararFormularios();
+    if (estado.pantalla === 'inicio') mostrarInicio();
+    return true;
+  } finally {
+    estado.refrescando = false;
+    actualizarBarra();
+  }
+}
+
+function iniciarPantallaPin() {
+  const campo = $('#pin-input');
+  campo.addEventListener('input', () => {
+    campo.value = campo.value.replace(/\D/g, '').slice(0, 6);
+    $('#btn-pin').disabled = campo.value.length !== 6;
+    $('#pin-error').textContent = '';
+    $('#campo-pin').classList.remove('malo');
+  });
+  $('#f-pin').addEventListener('submit', ev => {
+    ev.preventDefault();
+    if (campo.value.length !== 6) return;
+    estado.pin = campo.value;
+    cargarListas(true);
+  });
+  $('#btn-reintentar').addEventListener('click', () => cargarListas(false));
+  $('#btn-error-pin').addEventListener('click', () => { olvidarPin(); pantallaPin(); });
+  $('#btn-cambiar-pin').addEventListener('click', () => { olvidarPin(); pantallaPin(); });
+  $('#btn-actualizar').addEventListener('click', () => {
+    if (estado.pinInvalido) { olvidarPin(); return pantallaPin('Escribí el PIN nuevo.'); }
+    cargarListas(false);
+  });
+}
+
+// ==========================================================================
+// 6. LISTAS Y FORMULARIOS (campos)
+// ==========================================================================
+const tractorPorNombre = n => (estado.listas ? estado.listas.tractores : []).find(t => t.nombre === n) || null;
+
+function llenarSelect(sel, items, marcador) {
+  const actual = sel.value;
+  sel.textContent = '';
+  const o0 = document.createElement('option');
+  o0.value = '';
+  o0.textContent = items.length ? marcador : '(no hay opciones cargadas)';
+  sel.appendChild(o0);
+  items.forEach(txt => {
+    const o = document.createElement('option');
+    o.value = txt; o.textContent = txt;
+    sel.appendChild(o);
+  });
+  sel.value = items.indexOf(actual) >= 0 ? actual : '';
+}
+
+function ultimosGuardados() {
+  try { return JSON.parse(leerLS(CLAVE.ultimos) || '{}') || {}; } catch (e) { return {}; }
+}
+function recordarUltimos(operario, tractor) {
+  guardarLS(CLAVE.ultimos, JSON.stringify({ operario: operario, tractor: tractor }));
+}
+
+function campoDe(id) { return $('#' + id).closest('.campo'); }
+function marcarError(id, msg) {
+  const c = campoDe(id);
+  c.classList.toggle('malo', !!msg);
+  const e = $('.error', c);
+  if (e) e.textContent = msg || '';
+}
+function limpiarErrores(form) {
+  $$('.campo', form).forEach(c => { c.classList.remove('malo'); const e = $('.error', c); if (e) e.textContent = ''; });
+  $$('.caja-error', form).forEach(c => { c.hidden = true; });
+}
+
+const FORM = {
+  trabajo: { pantalla: 'trabajo', form: '#f-trabajo', sujio: false },
+  gasoil: { pantalla: 'gasoil', form: '#f-gasoil', sujio: false }
+};
+
+/** Llena los menús con las listas del servidor (conserva lo ya elegido). */
+function prepararFormularios() {
+  const L = estado.listas;
+  const tractores = L.tractores.map(t => t.nombre);
+  const ult = ultimosGuardados();
+  ['t', 'g'].forEach(p => {
+    const nuevo = !$('#' + p + '-operario').value && !$('#' + p + '-tractor').value;
+    llenarSelect($('#' + p + '-operario'), L.operarios, 'Elegí el operario…');
+    llenarSelect($('#' + p + '-tractor'), tractores, 'Elegí la máquina…');
+    if (nuevo) {
+      if (ult.operario && L.operarios.indexOf(ult.operario) >= 0) $('#' + p + '-operario').value = ult.operario;
+      if (ult.tractor && tractores.indexOf(ult.tractor) >= 0) $('#' + p + '-tractor').value = ult.tractor;
+    }
+  });
+  llenarSelect($('#t-implemento'), L.implementos, '— Ninguno —');
+  $('#t-implemento option').textContent = '— Ninguno —';
+  llenarSelect($('#t-trabajo'), L.trabajos.concat(['Otro']), 'Elegí el trabajo…');
+  llenarSelect($('#t-potrero'), L.potreros, 'Elegí el potrero…');
+  llenarSelect($('#g-origen'), L.origenes, 'Elegí el origen…');
+  if (!FORM.trabajo.sujio && !$('#t-fecha').value) $('#t-fecha').value = hoyISO();
+  if (!FORM.gasoil.sujio && !$('#g-fecha').value) $('#g-fecha').value = hoyISO();
+  alElegirTractorTrabajo(false);
+  alElegirTractorGasoil();
+  alElegirTrabajo();
+}
+
+/** Línea de estado al pie del inicio (también dice si la página ya quedó guardada para abrir sin señal). */
+function pintarEstadoDatos() {
+  const a = estado.actualizado;
+  const hora = a ? dos(a.getHours()) + ':' + dos(a.getMinutes()) : '—';
+  const hoy = hoyISO();
+  const dia = a ? a.getFullYear() + '-' + dos(a.getMonth() + 1) + '-' + dos(a.getDate()) : hoy;
+  let t = 'Listas actualizadas ' + (dia === hoy ? 'a las ' + hora : 'el ' + fechaDmy(dia) + ' a las ' + hora);
+  if (estado.desdeCache) t += ' (guardadas en el celular)';
+  if (estado.avisoListas) t += '\n' + estado.avisoListas;
+  $('#estado-datos').textContent = t + '\n' + (estado.paginaGuardada ? '📲 La app abre sin señal · ' : '') + estado.disp + ' · v' + VERSION_APP;
+}
+
+function mostrarInicio() {
+  pintarEstadoDatos();
+  $('#aviso-version').hidden = !estado.versionNueva;
+  mostrar('inicio');
+}
+
+function irAFormulario(tipo) {
+  estado.formActual = tipo;
+  const f = FORM[tipo];
+  const pref = tipo === 'trabajo' ? 't' : 'g';
+  if (!f.sujio) {                                                  // formulario intacto: fecha de HOY y los últimos usados
+    $('#' + pref + '-fecha').value = hoyISO();
+    const ult = ultimosGuardados();
+    if (ult.operario && estado.listas.operarios.indexOf(ult.operario) >= 0) $('#' + pref + '-operario').value = ult.operario;
+    if (ult.tractor && tractorPorNombre(ult.tractor)) $('#' + pref + '-tractor').value = ult.tractor;
+    if (tipo === 'trabajo') alElegirTractorTrabajo(false); else alElegirTractorGasoil();
+  }
+  limpiarErrores($(f.form));
+  entrar(f.pantalla);
+}
+
+// ---- Trabajo: horómetro, horas, "Otro" -------------------------------------
+function alElegirTractorTrabajo(porUsuario) {
+  const t = tractorPorNombre($('#t-tractor').value);
+  const hini = $('#t-hini');
+  $('#t-ultimo').textContent = t && t.ultimoHorometro !== null && t.ultimoHorometro !== undefined
+    ? 'Último horómetro registrado: ' + fmt(t.ultimoHorometro) : '';
+  // El inicial se completa solo con el último registrado, mientras nadie lo haya escrito a mano
+  if (!hini.value || hini.dataset.auto === '1') {
+    if (t && t.ultimoHorometro !== null && t.ultimoHorometro !== undefined) { hini.value = fmt(t.ultimoHorometro); hini.dataset.auto = '1'; }
+    else if (hini.dataset.auto === '1') { hini.value = ''; hini.dataset.auto = ''; }
+  }
+  if (porUsuario) marcarError('t-tractor', '');
+  actualizarHoras();
+}
+
+function alElegirTractorGasoil() {
+  const t = tractorPorNombre($('#g-tractor').value);
+  $('#g-ultimo').textContent = t && t.ultimoHorometro !== null && t.ultimoHorometro !== undefined
+    ? 'Último horómetro registrado: ' + fmt(t.ultimoHorometro) : '';
+  $('#g-capacidad').textContent = t && t.capacidad ? 'Capacidad del tanque: ' + fmt(t.capacidad) + ' litros' : '';
+}
+
+function alElegirTrabajo() {
+  const otro = $('#t-trabajo').value === 'Otro';
+  $('#t-otro-campo').hidden = !otro;
+  if (!otro) { $('#t-otro').value = ''; marcarError('t-otro', ''); }
+}
+
+/** Calcula y muestra las horas (final − inicial) en vivo. Devuelve el número o null. */
+function actualizarHoras() {
+  const a = parseNumero($('#t-hini').value), b = parseNumero($('#t-hfin').value);
+  const caja = $('#t-horas');
+  caja.className = 'horas';
+  if (a === null || b === null || isNaN(a) || isNaN(b)) { caja.textContent = 'Horas trabajadas: —'; return null; }
+  if (b <= a) { caja.textContent = 'El horómetro final tiene que ser MAYOR que el inicial'; caja.classList.add('mal'); return null; }
+  const h = r2(b - a);
+  if (h > estado.config.horasMaxDia) {
+    caja.textContent = 'Horas trabajadas: ' + fmt(h) + ' h  ⚠️ son muchas, revisá';
+    caja.classList.add('aviso');
+  } else {
+    caja.textContent = 'Horas trabajadas: ' + fmt(h) + ' h';
+    caja.classList.add('ok');
+  }
+  return h;
+}
+
+function fijarLleno(si) {
+  $('#g-lleno-si').setAttribute('aria-pressed', si ? 'true' : 'false');
+  $('#g-lleno-no').setAttribute('aria-pressed', si ? 'false' : 'true');
+}
+const llenoActual = () => ($('#g-lleno-si').getAttribute('aria-pressed') === 'true' ? 'SI' : 'NO');
+
+// ==========================================================================
+// 7. LECTURA Y VALIDACIÓN
+//    errores = obligatorios (no deja avanzar). avisos = se puede enviar igual.
+// ==========================================================================
+function errorNumero(texto, min, max, obligatorio, etiqueta) {
+  const n = parseNumero(texto);
+  if (n === null) return obligatorio ? 'Escribí ' + etiqueta + '.' : null;
+  if (isNaN(n)) return 'Eso no es un número. Usá solo cifras y coma o punto.';
+  if (n < min || n > max) return 'Ese número no es posible. Revisalo.';
+  return null;
+}
+
+function avisosFecha(fecha, avisos) {
+  const d = diasEntre(fecha, hoyISO());
+  if (d > 0) avisos.push('La fecha (' + fechaDmy(fecha) + ') es futura.');
+  else if (-d > DIAS_VIEJA) avisos.push('La fecha (' + fechaDmy(fecha) + ') es de hace más de ' + DIAS_VIEJA + ' días.');
+}
+
+function leerTrabajo() {
+  const v = id => $('#' + id).value;
+  return {
+    fecha: v('t-fecha'), operario: v('t-operario'), tractor: v('t-tractor'), implemento: v('t-implemento'),
+    trabajo: v('t-trabajo'), otro: v('t-otro').trim(), potrero: v('t-potrero'),
+    hini: v('t-hini'), hfin: v('t-hfin'), hect: v('t-hect'), obs: v('t-obs').trim()
+  };
+}
+
+function validarTrabajo(d) {
+  const errores = {}, avisos = [];
+  if (!fechaValida(d.fecha)) errores['t-fecha'] = 'Elegí la fecha.';
+  if (!d.operario) errores['t-operario'] = 'Elegí el operario.';
+  if (!d.tractor) errores['t-tractor'] = 'Elegí el tractor o la máquina.';
+  if (!d.trabajo) errores['t-trabajo'] = 'Elegí el trabajo realizado.';
+  else if (d.trabajo === 'Otro' && !d.otro) errores['t-otro'] = 'Escribí qué trabajo fue.';
+  if (!d.potrero) errores['t-potrero'] = 'Elegí el potrero.';
+  const e1 = errorNumero(d.hini, 0, 1000000, true, 'el horómetro inicial');
+  const e2 = errorNumero(d.hfin, 0, 1000000, true, 'el horómetro final');
+  if (e1) errores['t-hini'] = e1;
+  if (e2) errores['t-hfin'] = e2;
+  const a = parseNumero(d.hini), b = parseNumero(d.hfin);
+  if (!e1 && !e2 && b <= a) errores['t-hfin'] = 'Tiene que ser mayor que el inicial (' + fmt(a) + ').';
+  const e3 = errorNumero(d.hect, 0, 100000, false, '');
+  if (e3) errores['t-hect'] = e3;
+
+  if (!Object.keys(errores).length) {
+    const horas = r2(b - a);
+    if (horas > estado.config.horasMaxDia) avisos.push('Son ' + fmt(horas) + ' horas de trabajo (más de ' + estado.config.horasMaxDia + '). Revisá los horómetros.');
+    const t = tractorPorNombre(d.tractor);
+    if (t && t.ultimoHorometro !== null && t.ultimoHorometro !== undefined && a < t.ultimoHorometro - 0.0001) {
+      avisos.push('El horómetro inicial (' + fmt(a) + ') es menor que el último registrado de esta máquina (' + fmt(t.ultimoHorometro) + ').');
+    }
+    avisosFecha(d.fecha, avisos);
+  }
+  return { errores: errores, avisos: avisos };
+}
+
+function leerGasoil() {
+  const v = id => $('#' + id).value;
+  return {
+    fecha: v('g-fecha'), operario: v('g-operario'), tractor: v('g-tractor'),
+    litros: v('g-litros'), horo: v('g-horo'), lleno: llenoActual(), origen: v('g-origen'), obs: v('g-obs').trim()
+  };
+}
+
+function validarGasoil(d) {
+  const errores = {}, avisos = [];
+  if (!fechaValida(d.fecha)) errores['g-fecha'] = 'Elegí la fecha.';
+  if (!d.operario) errores['g-operario'] = 'Elegí el operario.';
+  if (!d.tractor) errores['g-tractor'] = 'Elegí el tractor o la máquina.';
+  const e1 = errorNumero(d.litros, 0, 20000, true, 'los litros');
+  if (e1) errores['g-litros'] = e1;
+  else if (parseNumero(d.litros) <= 0) errores['g-litros'] = 'Los litros tienen que ser más que cero.';
+  const e2 = errorNumero(d.horo, 0, 1000000, true, 'el horómetro');
+  if (e2) errores['g-horo'] = e2;
+  if (!d.origen) errores['g-origen'] = 'Elegí de dónde sacó el gasoil.';
+
+  if (!Object.keys(errores).length) {
+    const litros = parseNumero(d.litros), horo = parseNumero(d.horo);
+    const t = tractorPorNombre(d.tractor);
+    if (t && t.capacidad && litros > t.capacidad) {
+      avisos.push('Los litros (' + fmt(litros) + ') superan la capacidad del tanque (' + fmt(t.capacidad) + ').');
+    }
+    if (t && t.ultimoHorometro !== null && t.ultimoHorometro !== undefined && horo < t.ultimoHorometro - 0.0001) {
+      avisos.push('El horómetro (' + fmt(horo) + ') es menor que el último registrado de esta máquina (' + fmt(t.ultimoHorometro) + ').');
+    }
+    avisosFecha(d.fecha, avisos);
+  }
+  return { errores: errores, avisos: avisos };
+}
+
+/** Marca los errores en pantalla. Devuelve true si no hay ninguno. */
+function mostrarErrores(tipo, errores) {
+  const f = FORM[tipo], form = $(f.form);
+  limpiarErrores(form);
+  const ids = Object.keys(errores);
+  ids.forEach(id => marcarError(id, errores[id]));
+  const caja = $(tipo === 'trabajo' ? '#t-errores' : '#g-errores');
+  if (ids.length) {
+    caja.textContent = 'Falta algo o hay un número mal escrito. Revisá lo marcado en rojo.';
+    caja.hidden = false;
+    const primero = $('#' + ids[0]);
+    primero.scrollIntoView({ block: 'center' });
+    try { primero.focus({ preventScroll: true }); } catch (e) { /* nada */ }
+  }
+  return ids.length === 0;
+}
+
+// ==========================================================================
+// 8. CONFIRMACIÓN
+// ==========================================================================
+function fila(dt, dd, destacado) {
+  const f = document.createElement('div');
+  f.className = 'fila' + (destacado ? ' destacado' : '');
+  const a = document.createElement('dt'); a.textContent = dt;
+  const b = document.createElement('dd'); b.textContent = dd;
+  f.appendChild(a); f.appendChild(b);
+  return f;
+}
+
+/** Arma el registro tal como lo espera el servidor, y su resumen para mostrar. */
+function armarTrabajo(d) {
+  const a = parseNumero(d.hini), b = parseNumero(d.hfin), ha = parseNumero(d.hect);
+  const core = {
+    tipo: 'trabajo', fecha: d.fecha, operario: d.operario, tractor: d.tractor, implemento: d.implemento,
+    trabajo: d.trabajo, trabajoOtro: d.trabajo === 'Otro' ? d.otro : '', potrero: d.potrero,
+    horoInicial: r2(a), horoFinal: r2(b), hectareas: ha === null ? null : r2(ha), observaciones: d.obs
+  };
+  const filas = [
+    ['Fecha', fechaDmy(d.fecha)], ['Operario', d.operario], ['Tractor / máquina', d.tractor],
+    ['Implemento', d.implemento || '—'], ['Trabajo', d.trabajo === 'Otro' ? 'Otro: ' + d.otro : d.trabajo],
+    ['Potrero', d.potrero], ['Horómetro inicial', fmt(a)], ['Horómetro final', fmt(b)],
+    ['Horas trabajadas', fmt(r2(b - a)) + ' h', true]
+  ];
+  if (ha !== null) filas.push(['Hectáreas', fmt(ha)]);
+  if (d.obs) filas.push(['Observaciones', d.obs]);
+  return { core: core, filas: filas, horometroFinal: r2(b) };
+}
+
+function armarGasoil(d) {
+  const litros = parseNumero(d.litros), horo = parseNumero(d.horo);
+  const core = {
+    tipo: 'gasoil', fecha: d.fecha, operario: d.operario, tractor: d.tractor, litros: r2(litros),
+    horometro: r2(horo), llenoTanque: d.lleno, origen: d.origen, observaciones: d.obs
+  };
+  const filas = [
+    ['Fecha', fechaDmy(d.fecha)], ['Operario', d.operario], ['Tractor / máquina', d.tractor],
+    ['Litros cargados', fmt(litros) + ' L', true], ['Horómetro', fmt(horo)],
+    ['¿Llenó el tanque?', d.lleno === 'SI' ? 'SÍ' : 'NO'], ['Origen', d.origen]
+  ];
+  if (d.obs) filas.push(['Observaciones', d.obs]);
+  return { core: core, filas: filas, horometroFinal: r2(horo) };
+}
+
+function revisar(tipo) {
+  const leer = tipo === 'trabajo' ? leerTrabajo : leerGasoil;
+  const validar = tipo === 'trabajo' ? validarTrabajo : validarGasoil;
+  const d = leer();
+  const v = validar(d);
+  if (!mostrarErrores(tipo, v.errores)) return;
+
+  const arm = tipo === 'trabajo' ? armarTrabajo(d) : armarGasoil(d);
+  // Si los datos no cambiaron desde un intento anterior, se conserva el mismo ID (así un reintento no duplica)
+  const clave = JSON.stringify(arm.core);
+  const previo = estado.pendiente;
+  const igual = previo && previo.clave === clave;
+  estado.pendiente = {
+    tipo: tipo, clave: clave, tractor: arm.core.tractor, horometroFinal: arm.horometroFinal,
+    reg: Object.assign({ id: igual ? previo.reg.id : uuid(), registradoEn: igual ? previo.reg.registradoEn : new Date().toISOString() }, arm.core),
+    filas: arm.filas
+  };
+
+  const lista = $('#c-resumen');
+  lista.textContent = '';
+  arm.filas.forEach(f => lista.appendChild(fila(f[0], f[1], f[2])));
+  const av = $('#c-avisos');
+  av.textContent = '';
+  if (v.avisos.length) {
+    const caja = document.createElement('div');
+    caja.className = 'caja caja-aviso';
+    caja.appendChild(document.createTextNode('⚠️ Fijate en esto. Se puede enviar igual:'));
+    const ul = document.createElement('ul');
+    v.avisos.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+    caja.appendChild(ul);
+    av.appendChild(caja);
+  }
+  $('#c-error').hidden = true;
+  $('#btn-confirmar').textContent = '✅ Confirmar';
+  mostrar('confirmar');
+}
+
+// ==========================================================================
+// 9. COLA DE PENDIENTES Y ENVÍO
+//    Todo registro se guarda PRIMERO en el celular y después se intenta enviar.
+//    Cada registro lleva su ID: si se envía dos veces, el servidor no lo duplica.
+//    Solo se borra del celular cuando el servidor confirma (guardado o duplicado) o lo rechaza.
+// ==========================================================================
+function leerJSON(k, def) {
+  try { const v = JSON.parse(leerLS(k) || 'null'); return v === null ? def : v; } catch (e) { return def; }
+}
+
+function leerCola() {
+  const c = leerJSON(CLAVE.cola, []);
+  return Array.isArray(c) ? c.filter(x => x && x.reg && typeof x.reg.id === 'string') : [];
+}
+/** true si quedó guardada en el celular. */
+function escribirCola(c) {
+  try { localStorage.setItem(CLAVE.cola, JSON.stringify(c)); return true; } catch (e) { return false; }
+}
+function encolar(item) {
+  const c = leerCola();
+  if (!c.some(x => x.reg.id === item.reg.id)) c.push(item);
+  return escribirCola(c);
+}
+function quitarDeCola(ids) {
+  if (!ids.length) return;
+  escribirCola(leerCola().filter(x => ids.indexOf(x.reg.id) < 0));
+}
+function sumarIntento(ids) {
+  const c = leerCola();
+  c.forEach(x => { if (ids.indexOf(x.reg.id) >= 0) x.intentos = (x.intentos || 0) + 1; });
+  escribirCola(c);
+}
+
+function leerRechazados() {
+  const l = leerJSON(CLAVE.rechazados, []);
+  return Array.isArray(l) ? l : [];
+}
+function agregarRechazado(item, motivo) {
+  const l = leerRechazados();
+  l.push({ id: item.reg.id, tipo: item.tipo, fecha: item.reg.fecha, tractor: item.reg.tractor, motivo: motivo || 'sin detalle', cuando: new Date().toISOString() });
+  guardarLS(CLAVE.rechazados, JSON.stringify(l.slice(-20)));
+}
+function quitarRechazado(id) {
+  guardarLS(CLAVE.rechazados, JSON.stringify(leerRechazados().filter(x => x.id !== id)));
+}
+
+const resumenCorto = r => (r.tipo === 'trabajo'
+  ? 'Trabajo del ' + fechaDmy(r.fecha) + ' · ' + r.tractor + ' · ' + fmt(r.horoFinal - r.horoInicial) + ' h'
+  : 'Gasoil del ' + fechaDmy(r.fecha) + ' · ' + r.tractor + ' · ' + fmt(r.litros) + ' L');
+
+/** Un envío de varios registros. */
+async function enviarLote(items) {
+  const espera = Math.min(60000, ESPERA_MS + 2000 * items.length);
+  let r;
+  try {
+    r = await llamar('registrar', { registros: items.map(i => i.reg) }, espera);
+  } catch (e) {
+    estado.sinSenal = true;
+    return { tipo: 'red', causa: e.tipo };
+  }
+  estado.sinSenal = false;
+  if (!r || r.ok !== true) return { tipo: 'global', codigo: (r && r.error) || 'DESCONOCIDO' };
+  return { tipo: 'ok', resultados: Array.isArray(r.resultados) ? r.resultados : [] };
+}
+
+/** Según lo que respondió el servidor, saca de la cola lo que ya quedó resuelto. */
+function aplicarResultados(items, resultados, informe) {
+  const porId = {};
+  resultados.forEach(x => { if (x && typeof x.id === 'string') porId[x.id] = x; });
+  const quitar = [];
+  items.forEach(it => {
+    const x = porId[it.reg.id];
+    if (!x) return;
+    if (x.estado === 'guardado' || x.estado === 'duplicado') {
+      quitar.push(it.reg.id);
+      informe.enviados.push({ id: it.reg.id, estado: x.estado, alertas: x.alertas || [] });
+    } else if (x.estado === 'rechazado') {
+      quitar.push(it.reg.id);
+      agregarRechazado(it, x.motivo);
+      informe.rechazados.push({ id: it.reg.id, motivo: x.motivo || 'datos incorrectos' });
+    }                                           // 'error': falla temporal del servidor, se queda en la cola
+  });
+  quitarDeCola(quitar);
+}
+
+/**
+ * Envía la cola de a LOTE registros. Se detiene ante: falta de señal, PIN incorrecto o error del servidor.
+ * opc.primero + opc.soloPrimero: manda solo ese registro (el que se acaba de confirmar), para no hacer esperar de más.
+ */
+async function vaciarColaInterno(opc) {
+  const informe = { enviados: [], rechazados: [], fin: 'vacia', codigo: null };
+  if (!estado.pin) { informe.fin = 'sinpin'; return informe; }
+  if (estado.pinInvalido) { informe.fin = 'pin'; return informe; }
+  try {
+    for (let vuelta = 0; vuelta < 30; vuelta++) {
+      const cola = leerCola();
+      const solo = vuelta === 0 && opc && opc.primero;
+      const lote = solo ? cola.filter(x => x.reg.id === opc.primero) : cola.slice(0, LOTE);
+      if (!lote.length) { informe.fin = 'vacia'; break; }
+      estado.enviandoCola = true;
+      actualizarBarra();
+      const r = await enviarLote(lote);
+      if (r.tipo === 'red') { informe.fin = 'red'; break; }
+      if (r.tipo === 'global') {
+        informe.fin = 'global'; informe.codigo = r.codigo;
+        if (r.codigo === 'PIN_INCORRECTO') { estado.pinInvalido = true; informe.fin = 'pin'; }   // no insistir: contaría como intento fallido
+        break;
+      }
+      aplicarResultados(lote, r.resultados, informe);
+      const quedan = leerCola();
+      const sigue = lote.filter(i => quedan.some(c => c.reg.id === i.reg.id));
+      if (sigue.length) { sumarIntento(sigue.map(i => i.reg.id)); informe.fin = 'parcial'; break; }
+      if (opc && opc.soloPrimero) break;
+    }
+  } finally {
+    estado.enviandoCola = false;
+    actualizarBarra();
+  }
+  return informe;
+}
+
+/** Un solo envío a la vez: si ya hay uno en curso, se espera a que termine (así nunca se manda lo mismo dos veces a la vez). */
+async function vaciarCola(opc) {
+  while (estado.vaciando) { try { await estado.vaciando; } catch (e) { /* ya se manejó */ } }
+  const trabajo = vaciarColaInterno(opc);
+  estado.vaciando = trabajo;
+  try { return await trabajo; } finally { if (estado.vaciando === trabajo) estado.vaciando = null; }
+}
+
+/** Se llama sola: al abrir, al volver la señal, al volver a la app y cada minuto. */
+function vaciarSiHay() {
+  if (!estado.pin || estado.pinInvalido || estado.enviando) return;
+  if (!leerCola().length) { actualizarBarra(); return; }
+  if (navigator.onLine === false) { actualizarBarra(); return; }
+  vaciarCola().then(inf => informarVaciado(inf, false));
+}
+
+async function enviarAhora() {
+  if (estado.pinInvalido || !estado.pin) return;
+  informarVaciado(await vaciarCola(), true);
+}
+
+function informarVaciado(inf, manual) {
+  actualizarCartelPendiente(inf);
+  if (inf.enviados.length) {
+    avisarBarra('✅ Se ' + (inf.enviados.length === 1 ? 'envió 1 pendiente' : 'enviaron ' + inf.enviados.length + ' pendientes'));
+  } else if (manual && inf.fin === 'red') {
+    avisarBarra('📴 Sin señal: no se pudo enviar. Se reintenta solo.');
+  } else if (manual && inf.fin === 'global') {
+    avisarBarra(textoError(inf.codigo));
+  } else if (manual && inf.fin === 'parcial') {
+    avisarBarra('El servidor no pudo recibirlo ahora. Se reintenta solo.');
+  }
+  actualizarBarra();
+}
+
+/** Si no hay dónde guardar en el celular (memoria llena o bloqueada), se intenta enviar directo y sin red no hay cómo asegurarlo. */
+async function enviarDirecto(item) {
+  const informe = { enviados: [], rechazados: [], fin: 'red', codigo: null, sinAlmacenamiento: true };
+  const r = await enviarLote([item]);
+  if (r.tipo === 'red') return informe;
+  if (r.tipo === 'global') {
+    informe.fin = 'global'; informe.codigo = r.codigo;
+    if (r.codigo === 'PIN_INCORRECTO') estado.pinInvalido = true;
+    return informe;
+  }
+  const x = r.resultados.find(y => y && y.id === item.reg.id);
+  informe.fin = 'parcial';
+  if (x && (x.estado === 'guardado' || x.estado === 'duplicado')) { informe.enviados.push({ id: item.reg.id, estado: x.estado, alertas: x.alertas || [] }); informe.fin = 'vacia'; }
+  else if (x && x.estado === 'rechazado') { informe.rechazados.push({ id: item.reg.id, motivo: x.motivo || 'datos incorrectos' }); informe.fin = 'vacia'; }
+  return informe;
+}
+
+// ==========================================================================
+// 10. CONFIRMAR Y RESULTADO
+// ==========================================================================
+function errorAlConfirmar(texto) {
+  const c = $('#c-error');
+  c.textContent = '❌ ' + texto;
+  c.hidden = false;
+  $('#btn-confirmar').textContent = '🔄 Probar de nuevo';
+  c.scrollIntoView({ block: 'center' });
+}
+
+async function confirmar() {
+  const p = estado.pendiente;
+  if (estado.enviando || !p) return;
+  $('#c-error').hidden = true;
+  const item = { reg: p.reg, tipo: p.tipo, tractor: p.tractor, horometroFinal: p.horometroFinal, creado: new Date().toISOString(), intentos: 0 };
+  const enCelular = encolar(item);                      // 1) primero se guarda en el celular
+  ocupado(true);
+  let inf;
+  try {                                                 // 2) después se intenta enviar (solo este registro)
+    inf = enCelular ? await vaciarCola({ primero: p.reg.id, soloPrimero: true }) : await enviarDirecto(item);
+  } finally {
+    ocupado(false);
+  }
+  const mio = inf.enviados.find(e => e.id === p.reg.id);
+  const rech = inf.rechazados.find(e => e.id === p.reg.id);
+  if (mio) {
+    exito(p, mio);
+  } else if (rech) {
+    quitarRechazado(p.reg.id);                          // ya se le avisa acá; no repetirlo en el inicio
+    errorAlConfirmar('El servidor no aceptó el registro: ' + rech.motivo + '. Tocá "Corregir".');
+  } else if (!enCelular) {
+    errorAlConfirmar(inf.fin === 'pin'
+      ? 'El PIN cambió y este celular no puede guardar datos. Escribí el PIN nuevo y probá de nuevo.'
+      : 'NO se guardó: no hay señal y este celular no deja guardar datos. Tus datos siguen acá; probá de nuevo con señal.');
+  } else {
+    resultadoPendiente(p, inf);
+  }
+  if (inf.fin === 'vacia') setTimeout(vaciarSiHay, 400);    // lo que haya quedado de antes se sigue enviando por detrás
+}
+
+function recordarEnLocal(p) {
+  const t = tractorPorNombre(p.tractor);
+  if (t) t.ultimoHorometro = p.horometroFinal;          // el próximo registro ya parte de acá
+  recordarUltimos(p.reg.operario, p.reg.tractor);
+  guardarCacheListas();
+}
+
+/** Avisos que el servidor dejó anotados para el administrador (se muestran en la pantalla de resultado). */
+function pintarAlertasServidor(alertas) {
+  const av = $('#r-avisos');
+  av.textContent = '';
+  if (!alertas || !alertas.length) return;
+  const caja = document.createElement('div');
+  caja.className = 'caja caja-aviso';
+  caja.appendChild(document.createTextNode('📝 Quedó marcado para que el administrador lo revise:'));
+  const ul = document.createElement('ul');
+  alertas.forEach(a => { const li = document.createElement('li'); li.textContent = a; ul.appendChild(li); });
+  caja.appendChild(ul);
+  av.appendChild(caja);
+}
+
+function exito(p, x) {
+  recordarEnLocal(p);
+  $('#r-caja').className = 'resultado';
+  $('#r-ico').textContent = '✅';
+  $('#r-titulo').textContent = 'Guardado';
+  $('#r-detalle').textContent = resumenCorto(p.reg) + (x.estado === 'duplicado' ? ' (ya estaba guardado)' : '');
+  pintarAlertasServidor(x.alertas);
+  resetearFormulario(p.tipo);
+  estado.pendiente = null;
+  mostrar('resultado');
+}
+
+/**
+ * Si el registro que se está viendo en el cartel "Guardado en el celular" acaba de enviarse (o de ser rechazado),
+ * el cartel lo dice: ya no puede seguir diciendo "se enviará cuando haya señal".
+ */
+function actualizarCartelPendiente(inf) {
+  const vp = estado.verPendiente;
+  if (!vp || estado.pantalla !== 'resultado') return;
+  const env = inf.enviados.find(e => e.id === vp.reg.id);
+  const rech = inf.rechazados.find(e => e.id === vp.reg.id);
+  if (env) {
+    $('#r-caja').className = 'resultado';
+    $('#r-ico').textContent = '✅';
+    $('#r-titulo').textContent = 'Enviado';
+    $('#r-detalle').textContent = resumenCorto(vp.reg) + '\nYa quedó guardado en la planilla.';
+    pintarAlertasServidor(env.alertas);
+    estado.verPendiente = null;
+  } else if (rech) {
+    $('#r-caja').className = 'resultado mal';
+    $('#r-ico').textContent = '❌';
+    $('#r-titulo').textContent = 'El servidor no aceptó este registro';
+    $('#r-detalle').textContent = resumenCorto(vp.reg) + '\n' + rech.motivo + '\nAvisale al administrador.';
+    $('#r-avisos').textContent = '';
+    estado.verPendiente = null;
+  }
+}
+
+/** Quedó guardado en el celular y todavía no pudo enviarse. */
+function resultadoPendiente(p, inf) {
+  recordarEnLocal(p);
+  estado.verPendiente = { reg: p.reg };                    // para poder cambiar el cartel cuando se envíe
+  $('#r-caja').className = 'resultado pendiente';
+  $('#r-ico').textContent = '📶';
+  $('#r-titulo').textContent = 'Guardado en el celular, se enviará cuando haya señal';
+  let detalle = resumenCorto(p.reg);
+  if (inf.fin === 'pin') detalle += '\nEl PIN cambió: tocá "Ingresar el PIN" para que se envíe.';
+  else if (inf.fin === 'global') detalle += '\n' + textoError(inf.codigo) + ' Se reintenta solo.';
+  else if (inf.fin === 'parcial') detalle += '\nEl servidor no pudo recibirlo ahora. Se reintenta solo.';
+  $('#r-detalle').textContent = detalle;
+  $('#r-avisos').textContent = '';
+  resetearFormulario(p.tipo);
+  estado.pendiente = null;
+  mostrar('resultado');
+}
+
+function resetearFormulario(tipo) {
+  const f = FORM[tipo];
+  f.sujio = false;
+  limpiarErrores($(f.form));
+  if (tipo === 'trabajo') {
+    $('#t-fecha').value = hoyISO();
+    ['t-implemento', 't-trabajo', 't-potrero', 't-hfin', 't-hect', 't-obs', 't-otro'].forEach(id => { $('#' + id).value = ''; });
+    $('#t-hini').value = ''; $('#t-hini').dataset.auto = '';
+    alElegirTrabajo();
+    alElegirTractorTrabajo(false);                           // vuelve a poner el último horómetro
+  } else {
+    $('#g-fecha').value = hoyISO();
+    ['g-litros', 'g-horo', 'g-origen', 'g-obs'].forEach(id => { $('#' + id).value = ''; });
+    fijarLleno(true);
+    alElegirTractorGasoil();
+  }
+}
+
+// ==========================================================================
+// 11. CONEXIÓN DE BOTONES
+// ==========================================================================
+function iniciarFormularios() {
+  $('#btn-ir-trabajo').addEventListener('click', () => irAFormulario('trabajo'));
+  $('#btn-ir-gasoil').addEventListener('click', () => irAFormulario('gasoil'));
+  $$('[data-accion="inicio"]').forEach(b => b.addEventListener('click', irInicio));
+  $('#btn-inicio').addEventListener('click', irInicio);
+  $('#btn-otro').addEventListener('click', () => { irAFormulario(estado.formActual || 'trabajo'); });
+  $('#btn-corregir').addEventListener('click', () => { $('#c-error').hidden = true; mostrar(estado.formActual || 'inicio'); });
+  $('#btn-confirmar').addEventListener('click', confirmar);
+
+  $('#f-trabajo').addEventListener('submit', ev => { ev.preventDefault(); revisar('trabajo'); });
+  $('#f-gasoil').addEventListener('submit', ev => { ev.preventDefault(); revisar('gasoil'); });
+
+  // Cualquier cambio marca el formulario como "usado" y borra el error de ese campo
+  ['trabajo', 'gasoil'].forEach(tipo => {
+    const manejar = ev => {
+      FORM[tipo].sujio = true;
+      const id = ev.target && ev.target.id;
+      if (id && ev.target.closest('.campo')) marcarError(id, '');
+    };
+    $(FORM[tipo].form).addEventListener('input', manejar);
+    $(FORM[tipo].form).addEventListener('change', manejar);
+  });
+
+  $('#t-tractor').addEventListener('change', () => alElegirTractorTrabajo(true));
+  $('#t-trabajo').addEventListener('change', alElegirTrabajo);
+  $('#t-hini').addEventListener('input', () => { $('#t-hini').dataset.auto = ''; actualizarHoras(); });
+  $('#t-hfin').addEventListener('input', actualizarHoras);
+  $('#g-tractor').addEventListener('change', alElegirTractorGasoil);
+  $('#g-lleno-si').addEventListener('click', () => { fijarLleno(true); FORM.gasoil.sujio = true; });
+  $('#g-lleno-no').addEventListener('click', () => { fijarLleno(false); FORM.gasoil.sujio = true; });
+}
+
+// ==========================================================================
+// 12. BARRA DE PENDIENTES Y AVISOS
+// ==========================================================================
+function avisarBarra(texto) {
+  estado.mensajeBarra = texto;
+  clearTimeout(estado.relojBarra);
+  estado.relojBarra = setTimeout(() => { estado.mensajeBarra = ''; actualizarBarra(); }, 7000);
+  actualizarBarra();
+}
+
+function renderPendientes(cola) {
+  const det = $('#detalle-pendientes');
+  det.hidden = !cola.length;
+  $('#dp-titulo').textContent = 'Ver pendientes (' + cola.length + ')';
+  const ul = $('#dp-lista');
+  ul.textContent = '';
+  cola.forEach(it => { const li = document.createElement('li'); li.textContent = resumenCorto(it.reg); ul.appendChild(li); });
+}
+
+function renderRechazados() {
+  const l = leerRechazados();
+  $('#aviso-rechazados').hidden = !l.length;
+  const ul = $('#ar-lista');
+  ul.textContent = '';
+  l.forEach(x => {
+    const li = document.createElement('li');
+    li.textContent = (x.tipo === 'trabajo' ? 'Trabajo' : 'Gasoil') + ' del ' + fechaDmy(x.fecha) + ' · ' + x.tractor + ': ' + x.motivo;
+    ul.appendChild(li);
+  });
+}
+
+/** Contador de pendientes y estado de la conexión (se ve en todas las pantallas, menos en el PIN). */
+function actualizarBarra() {
+  const barra = $('#barra-estado');
+  if (!barra) return;
+  barra.hidden = estado.pantalla === 'pin' || estado.pantalla === 'cargando';
+  const cola = leerCola();
+  const n = cola.length;
+  const sinRed = navigator.onLine === false || estado.sinSenal;
+  $('#be-pendientes').textContent = 'Pendientes de enviar: ' + n;
+  let linea = '';
+  if (estado.enviandoCola) linea = '⏳ Enviando…';
+  else if (estado.pinInvalido) linea = '🔑 El PIN cambió: hace falta el PIN nuevo para enviar';
+  else if (sinRed) linea = '📴 Sin señal' + (n ? ': se enviará cuando vuelva' : '');        // el estado actual gana sobre un aviso viejo
+  else if (estado.mensajeBarra) linea = estado.mensajeBarra;
+  $('#be-red').textContent = linea;
+  barra.classList.toggle('hay', n > 0 || sinRed || estado.pinInvalido);
+  $('#btn-enviar-ahora').hidden = !(n > 0 && !estado.pinInvalido && !estado.enviandoCola);
+  $('#btn-pin-nuevo').hidden = !estado.pinInvalido;
+  renderPendientes(cola);
+  renderRechazados();
+}
+
+// ==========================================================================
+// 13. SEGUNDO PLANO, INSTALACIÓN Y ARRANQUE
+// ==========================================================================
+/** Al abrir y al volver la señal: primero las listas (valida el PIN) y después los pendientes. */
+async function segundoPlano() {
+  if (!estado.pin || estado.pinInvalido) return;
+  const ok = await refrescarListas();
+  if (ok || (!estado.sinSenal && !estado.pinInvalido)) vaciarSiHay();
+}
+
+function iniciarSegundoPlano() {
+  window.addEventListener('online', () => { estado.sinSenal = false; actualizarBarra(); segundoPlano(); });
+  window.addEventListener('offline', () => { actualizarBarra(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') vaciarSiHay(); });
+  setInterval(vaciarSiHay, REINTENTO_MS);
+  $('#btn-enviar-ahora').addEventListener('click', enviarAhora);
+  $('#btn-pin-nuevo').addEventListener('click', () => { olvidarPin(); pantallaPin('Escribí el PIN nuevo.'); });
+  $('#btn-rechazados-ok').addEventListener('click', () => { guardarLS(CLAVE.rechazados, null); actualizarBarra(); });
+  $('#aviso-version').addEventListener('click', () => { location.reload(); });
+
+  // Instalar en el celular (Chrome de Android ofrece el botón cuando la app cumple los requisitos)
+  let ofertaInstalar = null;
+  window.addEventListener('beforeinstallprompt', ev => {
+    ev.preventDefault();
+    ofertaInstalar = ev;
+    $('#btn-instalar').hidden = false;
+  });
+  window.addEventListener('appinstalled', () => { ofertaInstalar = null; $('#btn-instalar').hidden = true; });
+  $('#btn-instalar').addEventListener('click', async () => {
+    if (!ofertaInstalar) return;
+    ofertaInstalar.prompt();
+    try { await ofertaInstalar.userChoice; } catch (e) { /* nada */ }
+    ofertaInstalar = null;
+    $('#btn-instalar').hidden = true;
+  });
+
+  // Service worker: guarda la página para abrirla sin señal. Ruta relativa: sirve en /maquinaria-oroite/
+  if ('serviceWorker' in navigator && navigator.serviceWorker) {
+    navigator.serviceWorker.addEventListener('message', ev => {
+      if (ev.data && ev.data.tipo === 'version-nueva') {
+        estado.versionNueva = true;
+        if (estado.pantalla === 'inicio') $('#aviso-version').hidden = false;
+      }
+    });
+    const registrar = () => navigator.serviceWorker.register('sw.js')
+      .then(() => navigator.serviceWorker.ready)
+      .then(() => { estado.paginaGuardada = true; if (estado.pantalla === 'inicio') pintarEstadoDatos(); })
+      .catch(e => console.warn('Service worker:', e));
+    if (document.readyState === 'complete') registrar(); else window.addEventListener('load', registrar);
+  }
+}
+
+function arrancar() {
+  history.replaceState({ base: true }, '');
+  iniciarPantallaPin();
+  iniciarFormularios();
+  iniciarSegundoPlano();
+  if (!estado.pin || !/^\d{6}$/.test(estado.pin)) { olvidarPin(); return pantallaPin(); }
+  const guardado = leerCacheListas();
+  if (guardado) {
+    // Con listas guardadas la app abre al instante, también sin señal; por detrás se actualiza todo
+    estado.listas = guardado.listas;
+    estado.config = guardado.config || estado.config;
+    estado.actualizado = new Date(guardado.cuando);
+    estado.desdeCache = true;
+    aplicarPendientesALista();
+    prepararFormularios();
+    mostrarInicio();
+    segundoPlano();
+  } else {
+    cargarListas(false);                 // primera vez con este PIN en este celular: hace falta señal
+  }
+}
+arrancar();
+})();
+</script>
+</body>
+</html>
